@@ -1,6 +1,19 @@
 import streamlit as st
 import pickle
 import numpy as np
+import gdown
+import pandas as pd
+
+# Google Drive link (replace with your actual file ID)
+url = "https://drive.google.com/uc?id=1Z6--9jyYoMhEbOXNI5HNDhM0JtgJfQj9"
+output = "airline_data.csv"
+
+# Download the dataset if not already downloaded
+try:
+    df = pd.read_csv("airline_data.csv")  # Check if the file exists
+except FileNotFoundError:
+    gdown.download(url, output, quiet=False)
+    df = pd.read_csv("airline_data.csv")  # Load after downloading
 
 # Load the trained model
 with open('fare_prediction_model.pkl', 'rb') as file:
@@ -35,3 +48,4 @@ st.write("Feature values:", features)
 if st.button("Predict Fare"):
     prediction = model.predict(features)
     st.write(f"Predicted Fare: ${prediction[0]:.2f}")
+
