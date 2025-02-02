@@ -3,22 +3,39 @@ import pickle
 import numpy as np
 import gdown
 import pandas as pd
+import os
 
-# Google Drive link (replace with your actual file ID)
-url = "https://drive.google.com/uc?id=1Z6--9jyYoMhEbOXNI5HNDhM0JtgJfQj9"
-output = "airline_data.csv"
+# Google Drive file ID (Replace if needed)
+file_id = "1Z6--9jyYoMhEbOXNI5HNDhM0JtgJfQj9"
+dataset_path = "airline_data.csv"
 
-# Download the dataset if not already downloaded
+# Download the dataset if not already present
+if not os.path.exists(dataset_path):
+    try:
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, dataset_path, quiet=False)
+    except Exception as e:
+        st.error(f"Error downloading dataset: {e}")
+
+# Load dataset (handling errors)
 try:
-    df = pd.read_csv("airline_data.csv")  # Check if the file exists
-except FileNotFoundError:
-    gdown.download(url, output, quiet=False)
-    df = pd.read_csv("airline_data.csv")  # Load after downloading
+    df = pd.read_csv(dataset_path)
+except Exception as e:
+    st.error(f"Error loading dataset: {e}")
 
 # Load the trained model
-with open('fare_prediction_model.pkl', 'rb') as file:
-    model = pickle.load(file)
+model_path = "fare_prediction_model.pkl"
+try:
+    with open(model_path, 'rb') as file:
+        model = pickle.load(file)
+except FileNotFoundError:
+    st.error("Trained model file not found. Ensure 'fare_prediction_model.pkl' is in the project directory.")
+    st.stop()
+except Exception as e:
+    st.error(f"Error loading model: {e}")
+    st.stop()
 
+# Streamlit UI
 st.title("✈️ Airline Fare Prediction App")
 st.write("Enter flight details to predict the fare")
 
@@ -44,8 +61,11 @@ features = np.array([[lf_ms, large_ms, fare_lg, quarter, fare_low, year,
 st.write(f"Number of input features: {features.shape[1]}")
 st.write("Feature values:", features)
 
-# Predict
+# Predict fare
 if st.button("Predict Fare"):
-    prediction = model.predict(features)
-    st.write(f"Predicted Fare: ${prediction[0]:.2f}")
+    try:
+        prediction = model.predict(features)
+        st.success(f"Predicted Fare: ${prediction[0]:.2f}")
+    except Exception as e:
+        st.error(f"Error in prediction: {e}")
 
